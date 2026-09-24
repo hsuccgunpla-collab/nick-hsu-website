@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="_圖層_1" data-name="圖層_1" xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1024 1024">
+  <!-- Generator: Adobe Illustrator 30.8.1, SVG Export Plug-In . SVG Version: 2.1.4 Build 1)  -->
+  <defs>
+    <style>
+      .st0 {
+        fill: #837ff5;
+      }
+
+      .st0, .st1, .st2, .st3, .st4, .st5, .st6, .st7, .st8, .st9, .st10, .st11, .st12, .st13, .st14, .st15 {
+        isolation: isolate;
+      }
+
+      .st0, .st1, .st11, .st13 {
+        opacity: .72;
+      }
+
+      .st1 {
+        fill: #b8c5ff;
+      }
+
+      .st2 {
+        fill: #3e69ef;
+        opacity: .55;
+      }
+
+      .st3 {
+        fill: #5b78ea;
+      }
+
+      .st3, .st12 {
+        opacity: .76;
+      }
+
+      .st16 {
+        fill: url(#_未命名漸層_6);
+      }
+
+      .st4 {
+        fill: #5272ea;
+        opacity: .82;
+      }
+
+      .st17 {
+        fill: url(#_未命名漸層);
+      }
+
+      .st5 {
+        fill: #b6c3ff;
+        opacity: .74;
+      }
+
+      .st18 {
+        fill: url(#_未命名漸層_2);
+      }
+
+      .st6 {
+        fill: #5277ef;
+        opacity: .6;
+      }
+
+      .st7 {
+        fill: #8190f2;
+        opacity: .22;
+      }
+
+      .st8 {
+        opacity: .34;
+      }
+
+      .st8, .st15 {
+        fill: #a9b8ff;
+      }
+
+      .st19 {
+        fill: url(#_未命名漸層_5);
+      }
+
+      .st9 {
+        fill: #777af2;
+        opacity: .62;
+      }
+
+      .st20 {
+        fill: url(#_未命名漸層_3);
+      }
+
+      .st10 {
+        fill: #8b84f5;
+        opacity: .58;
+      }
+
+      .st11 {
+        fill: #5570e8;
+      }
+
+      .st12 {
+        fill: #7b71ef;
+      }
+
+      .st13 {
+        fill: #4d69ee;
+      }
+
+      .st21 {
+        fill: url(#_未命名漸層_4);
+      }
+
+      .st14 {
+        fill: #5e6ff0;
+        opacity: .88;
+      }
+
+      .st15 {
+        opacity: .28;
+      }
+    </style>
+    <linearGradient id="_未命名漸層" data-name="未命名漸層" x1="-445.25" y1="1052.82" x2="-444.25" y2="1051.82" gradientTransform="translate(110947 452853) scale(249 -430)" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#c0ccff"/>
+      <stop offset=".55" stop-color="#8897f6"/>
+      <stop offset="1" stop-color="#4d72e8"/>
+    </linearGradient>
+    <linearGradient id="_未命名漸層_2" data-name="未命名漸層 2" x1="-444.23" y1="1053.07" x2="-443.23" y2="1052.07" gradientTransform="translate(78401 413114) scale(176 -392)" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#9d91ff"/>
+      <stop offset=".55" stop-color="#706bef"/>
+      <stop offset="1" stop-color="#3d66ed"/>
+    </linearGradient>
+    <linearGradient id="_未命名漸層_3" data-name="未命名漸層 3" x1="-445.37" y1="1052.78" x2="-444.37" y2="1051.78" gradientTransform="translate(116311 377523) scale(261 -358)" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#c0ccff"/>
+      <stop offset=".55" stop-color="#8897f6"/>
+      <stop offset="1" stop-color="#4d72e8"/>
+    </linearGradient>
+    <linearGradient id="_未命名漸層_4" data-name="未命名漸層 4" x1="-446.12" y1="1052.78" x2="-445.12" y2="1051.78" gradientTransform="translate(200189 423639) scale(448 -402)" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#8e8cfa"/>
+      <stop offset=".5" stop-color="#626ef0"/>
+      <stop offset="1" stop-color="#2b62f2"/>
+    </linearGradient>
+    <linearGradient id="_未命名漸層_5" data-name="未命名漸層 5" x1="-445.23" y1="1053.06" x2="-444.33" y2="1052.06" gradientTransform="translate(126239 739270) scale(282 -702)" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#756ef0"/>
+      <stop offset=".5" stop-color="#697bf4"/>
+      <stop offset="1" stop-color="#245af0"/>
+    </linearGradient>
+    <linearGradient id="_未命名漸層_6" data-name="未命名漸層 6" x1="-445.39" y1="1052.92" x2="-444.39" y2="1051.92" gradientTransform="translate(139619 139771) scale(312 -132)" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#c0ccff"/>
+      <stop offset=".55" stop-color="#8897f6"/>
+      <stop offset="1" stop-color="#4d72e8"/>
+    </linearGradient>
+  </defs>
+  <g id="upper-left">
+    <polygon class="st17" points="108 90 357 286 108 520 108 90"/>
+    <polygon class="st1" points="108 90 357 286 108 286 108 90"/>
+    <polygon class="st4" points="108 286 357 286 108 520 108 286"/>
+    <polygon class="st15" points="108 286 108 90 225 182 225 286 108 286"/>
+  </g>
+  <g id="middle-left">
+    <polygon class="st18" points="193 544 369 365 369 757 193 544"/>
+    <polygon class="st0" points="193 544 369 365 369 544 193 544"/>
+    <polygon class="st14" points="193 544 369 544 369 757 193 544"/>
+  </g>
+  <g id="lower-left">
+    <polygon class="st20" points="108 576 369 784 369 934 108 934 108 576"/>
+    <polygon class="st7" points="108 576 369 784 369 934 108 934 108 576"/>
+    <polygon class="st11" points="108 934 227 812 369 934 108 934"/>
+    <polygon class="st8" points="108 576 227 672 227 934 108 934 108 576"/>
+  </g>
+  <g id="diagonal">
+    <polygon class="st21" points="397 360 845 762 573 762 397 600 397 360"/>
+    <polygon class="st9" points="397 360 845 762 687 762 397 502 397 360"/>
+    <polygon class="st13" points="397 600 573 762 845 762 687 620 397 600"/>
+    <polygon class="st10" points="397 360 537 486 537 626 397 502 397 360"/>
+  </g>
+  <g id="right-pillar">
+    <polygon class="st19" points="649 103.5 931 103.5 931 805.5 649 527.5 649 103.5"/>
+    <polygon class="st12" points="649 103.5 931 103.5 649 527.5 649 103.5"/>
+    <polygon class="st6" points="649 527.5 931 103.5 931 805.5 649 527.5"/>
+    <polygon class="st2" points="649 527.5 931 805.5 931 547.5 649 527.5"/>
+  </g>
+  <g id="lower-right">
+    <polygon class="st16" points="619 802 931 802 931 934 773 934 619 802"/>
+    <polygon class="st5" points="619 802 931 802 773 934 619 802"/>
+    <polygon class="st3" points="773 934 931 802 931 934 773 934"/>
+  </g>
+</svg>

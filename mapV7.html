@@ -1,0 +1,1739 @@
+<!DOCTYPE html>
+<html lang="zh-TW" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PERSONAL MAP</title>
+    <meta name="description" content="NICK HSU｜智程的個人探索地圖。EXPLORE · MAKE · CREATE · TEACH · SHARE。">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg: #111827;
+            --panel: rgba(31, 41, 55, 0.62);
+            --line: rgba(129, 140, 248, 0.42);
+            --line-soft: rgba(75, 85, 99, 0.8);
+            --accent: #818cf8;
+            --accent-soft: rgba(99, 102, 241, 0.14);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            background:
+                radial-gradient(circle at 50% 12%, rgba(79,70,229,.10), transparent 34%),
+                #111827;
+            color: #E5E7EB;
+            overflow-x: hidden;
+        }
+
+        .nav-scrolled {
+            background: rgba(17,24,39,.90);
+            backdrop-filter: blur(12px);
+            box-shadow: 0 4px 20px rgba(0,0,0,.22);
+        }
+
+        .map-shell {
+            position: relative;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+            height: calc(100vh - 76px);
+            min-height: 620px;
+            overflow: hidden;
+            cursor: grab;
+            touch-action: none;
+            background-image:
+                linear-gradient(rgba(255,255,255,.018) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,.018) 1px, transparent 1px);
+            background-size: 42px 42px;
+        }
+
+        .map-shell.dragging { cursor: grabbing; }
+
+        #map-stage {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: 1400px;
+            height: 1000px;
+            transform-origin: 50% 50%;
+        }
+
+        #connections {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: visible;
+        }
+
+        .branch-path {
+            fill: none;
+            stroke: var(--line-soft);
+            stroke-width: 3.5;
+            stroke-linecap: round;
+            transition: stroke .35s ease, stroke-width .35s ease, opacity .35s ease;
+        }
+
+        .branch-path.active {
+            stroke: var(--accent);
+            stroke-width: 4;
+        }
+
+        .branch-path.dimmed {
+            opacity: .22;
+        }
+
+        .map-node {
+            position: absolute;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+            transform: translate(-50%, -50%) scale(.96);
+            min-width: 155px;
+            padding: 15px 20px;
+            border: 1px solid rgba(75,85,99,.9);
+            border-radius: 12px;
+            background: rgba(31,41,55,.94);
+            box-shadow: 0 12px 30px rgba(0,0,0,.25);
+            text-align: center;
+            opacity: 0;
+            pointer-events: none;
+            transition:
+                opacity .28s ease,
+                transform .28s ease,
+                border-color .25s ease,
+                background .25s ease,
+                box-shadow .25s ease;
+            z-index: 5;
+        }
+
+        .map-node.visible {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .map-node:hover {
+            border-color: rgba(129,140,248,.8);
+            background: rgba(49,46,129,.28);
+            box-shadow: 0 0 0 1px rgba(99,102,241,.18), 0 14px 34px rgba(0,0,0,.3);
+        }
+
+        .map-node.selected {
+            border-color: var(--accent);
+            background: rgba(79,70,229,.20);
+            box-shadow: 0 0 0 2px rgba(99,102,241,.16), 0 0 30px rgba(99,102,241,.14);
+        }
+
+        .map-node.root {
+            min-width: 210px;
+            padding: 21px 28px;
+            border-radius: 16px;
+            border-color: rgba(129,140,248,.65);
+            background: rgba(30,41,59,.97);
+            box-shadow: 0 0 0 1px rgba(99,102,241,.12), 0 18px 50px rgba(0,0,0,.36);
+        }
+
+        .map-node.major {
+            min-width: 180px;
+            border-color: rgba(99,102,241,.45);
+        }
+
+        .map-node.child {
+            min-width: 150px;
+            padding: 12px 16px;
+        }
+
+        .map-node.leaf {
+            min-width: 140px;
+            padding: 10px 14px;
+            border-radius: 10px;
+        }
+
+        .node-en {
+            display: block;
+            margin-top: 5px;
+            font-size: 12px;
+            font-weight: 500;
+            letter-spacing: .10em;
+            color: #9CA3AF;
+        }
+
+        .root .node-en {
+            font-size: 14px;
+            letter-spacing: .08em;
+            color: #A5B4FC;
+        }
+
+        .major .node-en {
+            color: #C7D2FE;
+        }
+
+        .node-zh {
+            display: block;
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: .12em;
+            color: #F3F4F6;
+        }
+
+        .root .node-zh {
+            color: #FFFFFF;
+            font-size: 19px;
+            font-weight: 700;
+            letter-spacing: .08em;
+        }
+
+        .major .node-zh {
+            color: #C7D2FE;
+        }
+
+        .node-status {
+            display: block;
+            margin-top: 7px;
+            font-size: 9px;
+            color: #6B7280;
+            letter-spacing: .08em;
+        }
+
+        .map-node.has-content .node-status {
+            color: #818CF8;
+        }
+
+        .legend-panel,
+        .info-panel {
+            position: fixed;
+            z-index: 30;
+            background: rgba(17,24,39,.88);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(55,65,81,.9);
+            box-shadow: 0 15px 45px rgba(0,0,0,.3);
+        }
+
+        .legend-panel {
+            left: 22px;
+            bottom: 22px;
+            width: 255px;
+            padding: 16px;
+            border-radius: 14px;
+        }
+
+        .info-panel {
+            right: 22px;
+            bottom: 22px;
+            width: 330px;
+            max-height: 62vh;
+            overflow-y: auto;
+            padding: 20px;
+            border-radius: 16px;
+            transform: translateY(12px);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity .25s ease, transform .25s ease;
+        }
+
+        .info-panel.show {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+
+        .tag-pill {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 8px;
+            border-radius: 999px;
+            background: rgba(55,65,81,.75);
+            color: #A5B4FC;
+            font-size: 9px;
+            margin: 2px;
+        }
+
+        .control-btn {
+            width: 38px;
+            height: 38px;
+            border: 1px solid rgba(75,85,99,.9);
+            border-radius: 9px;
+            background: rgba(31,41,55,.86);
+            color: #D1D5DB;
+            transition: .2s ease;
+        }
+
+        .control-btn:hover {
+            border-color: rgba(129,140,248,.75);
+            color: white;
+            background: rgba(79,70,229,.18);
+        }
+
+        .map-controls {
+            position: fixed;
+            right: 22px;
+            top: 96px;
+            z-index: 30;
+            display: flex;
+            gap: 7px;
+        }
+
+        .breadcrumb {
+            position: fixed;
+            left: 22px;
+            top: 96px;
+            z-index: 30;
+            padding: 8px 12px;
+            border: 1px solid rgba(55,65,81,.85);
+            border-radius: 999px;
+            background: rgba(17,24,39,.76);
+            backdrop-filter: blur(10px);
+            color: #9CA3AF;
+            font-size: 11px;
+        }
+
+        .mobile-note {
+            display: none;
+        }
+
+        @media (max-width: 767px) {
+            .map-shell {
+                height: calc(100vh - 68px);
+                min-height: 600px;
+            }
+
+            #map-stage {
+                width: 1400px;
+                height: 1000px;
+            }
+
+            .map-node {
+                min-width: 145px;
+            }
+
+            .map-node.root {
+                min-width: 165px;
+            }
+
+            .map-node.major {
+                min-width: 145px;
+            }
+
+            .map-node.child {
+                min-width: 125px;
+            }
+
+            .map-node.leaf {
+                min-width: 112px;
+            }
+
+            .legend-panel {
+                left: 12px;
+                bottom: 12px;
+                width: calc(100% - 24px);
+                padding: 11px 13px;
+            }
+
+            .info-panel {
+                left: 12px;
+                right: 12px;
+                bottom: 82px;
+                width: auto;
+                max-height: 48vh;
+            }
+
+            .map-controls {
+                right: 12px;
+                top: 80px;
+            }
+
+            .breadcrumb {
+                left: 12px;
+                top: 80px;
+                max-width: calc(100% - 165px);
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            .mobile-note {
+                display: block;
+            }
+        }
+    
+        .logo-link {
+            display: inline-flex;
+            align-items: center;
+            text-decoration: none;
+        }
+
+        .site-logo {
+            display: block;
+            width: 50px;
+            height: 50px;
+            object-fit: contain;
+        }
+
+        .logo-link:hover .site-logo {
+            transform: scale(1.04);
+            transition: transform .2s ease;
+        }
+
+        @media (max-width: 767px) {
+            .site-logo {
+                width: 42px;
+                height: 42px;
+            }
+        }
+
+    </style>
+</head>
+
+<body class="antialiased">
+
+<header id="main-header" class="fixed top-0 left-0 right-0 z-50 transition-all duration-300">
+    <div class="container mx-auto px-5 md:px-6 py-4">
+        <nav class="flex items-center justify-between">
+            <a href="index.html" aria-label="NICK HSU Home" class="logo-link">
+                <img src="NICK_HSU_LOGO_MASTER.svg" alt="NICK HSU Tangram N" class="site-logo">
+            </a>
+
+            <div class="hidden md:flex items-center gap-8">
+                <a href="index.html" class="text-gray-400 hover:text-white transition">HOME</a>
+                <span class="text-indigo-400">PERSONAL MAP</span>
+            </div>
+
+            <a href="index.html" class="md:hidden text-gray-400 hover:text-white text-sm">HOME</a>
+        </nav>
+    </div>
+</header>
+
+<div class="breadcrumb">
+    PERSONAL MAP <span class="text-gray-600 mx-1">/</span> <span id="breadcrumb-current">NICK HSU</span>
+</div>
+
+<div class="map-controls">
+    <button id="zoom-out" class="control-btn" aria-label="縮小">−</button>
+    <button id="reset-view" class="control-btn" aria-label="重設">⌂</button>
+    <button id="zoom-in" class="control-btn" aria-label="放大">+</button>
+</div>
+
+<main id="map-shell" class="map-shell">
+
+    <div id="map-stage">
+        <svg id="connections" viewBox="0 0 3000 1350" preserveAspectRatio="none"></svg>
+    </div>
+
+</main>
+
+<div id="legend-panel" class="legend-panel">
+    <div class="flex items-center justify-between mb-3">
+        <p class="text-xs font-semibold tracking-[0.18em] text-gray-300">PERSONAL MAP</p>
+        <span class="text-[9px] text-gray-600">V1</span>
+    </div>
+
+    <p class="text-xs text-gray-500 leading-relaxed mb-3">
+        由上往下展開，讓每一層枝葉自然往下生長。
+    </p>
+
+    <div class="flex gap-2 text-[9px] text-gray-500 mb-3">
+        <span>● 節點</span>
+        <span>— 枝條</span>
+        <span>✦ 已連結內容</span>
+    </div>
+
+    <p class="mobile-note text-[9px] text-gray-600">
+        可拖曳地圖；使用右上角按鈕縮放。
+    </p>
+</div>
+
+<aside id="info-panel" class="info-panel">
+    <button id="close-info" class="absolute top-3 right-3 text-gray-500 hover:text-white text-lg">×</button>
+
+    <p id="info-type" class="text-indigo-400 text-[10px] tracking-[0.2em] mb-2">TAG</p>
+    <h2 id="info-title" class="text-xl font-bold text-white pr-5">EXPLORE</h2>
+    <p id="info-zh" class="text-gray-500 text-xs mt-1">探索</p>
+
+    <div class="mt-5 pt-4 border-t border-gray-800">
+        <p id="info-description" class="text-gray-400 text-sm leading-relaxed"></p>
+        <p id="info-count" class="text-gray-500 text-xs leading-relaxed mt-3"></p>
+    </div>
+
+    <div id="info-content" class="mt-5"></div>
+</aside>
+
+<script>
+/* =========================================================
+   PERSONAL MAP DATA
+   ========================================================= */
+
+/*
+   TAG DESCRIPTION
+   ------------------------------------------------------------
+   每個節點都可以選擇性加入：
+
+       description: "這個 TAG 的個人介紹。"
+
+   例如：
+       {
+           id: "ws2812b",
+           name: "WS2812B",
+           zh: "WS2812B",
+           description: "可程式化 RGB LED，用於模型燈光與動態燈效控制。"
+       }
+
+   description 不需要全部一次填完；沒有設定的節點會繼續使用
+   updateInfo() 的預設提示。
+   ------------------------------------------------------------
+*/
+
+const tagTree = [
+    {
+        id: "explore", name: "EXPLORE", zh: "探索",
+        children: [
+            {
+                id: "science", name: "SCIENCE", zh: "科學",
+                children: [
+                    { id: "natural-science", name: "Natural Science", zh: "自然科學" },
+                    { id: "marine-science", name: "Marine Science", zh: "海洋科學" },
+                    { id: "meteorology", name: "Meteorology", zh: "氣象學" }
+                ]
+            },
+            {
+                id: "fisheries-ecology", name: "FISHERIES & ECOLOGY", zh: "漁業與生態",
+                children: [
+                    { id: "fisheries", name: "Fisheries Management", zh: "漁業管理" },
+                    { id: "fish-biology", name: "Fish Biology", zh: "魚類生物學" },
+                    { id: "fisheries-ecology-topic", name: "Fisheries Ecology", zh: "漁業生態" },
+                    { id: "aquatic-resource-conservation", name: "Aquatic Resource Conservation", zh: "水產資源保育" },
+                    { id: "environmental-ecology", name: "Environmental Ecology", zh: "環境生態" }
+                ]
+            },
+            {
+                id: "ai", name: "AI", zh: "人工智慧",
+                children: [
+                    { id: "generative-ai", name: "Generative AI", zh: "生成式 AI" },
+                    { id: "ai-tools", name: "AI Tools", zh: "AI 工具" },
+                    { id: "ai-application", name: "AI Application", zh: "AI 應用" },
+                    { id: "prompt-engineering", name: "Prompt Engineering", zh: "Prompt Engineering" },
+                    { id: "comfyui", name: "ComfyUI", zh: "ComfyUI" },
+                    { id: "lora", name: "LoRA", zh: "LoRA" },
+                                  ]
+            },
+            {
+                id: "finance", name: "FINANCE", zh: "財務",
+                children: [
+                    { id: "investment", name: "Investment Planning", zh: "投資規劃" },
+                    { id: "asset-allocation", name: "Asset Allocation", zh: "資產配置" },
+                    { id: "labor-insurance", name: "Labor Insurance", zh: "勞保" },
+                    { id: "retirement-planning", name: "Retirement Planning", zh: "退休規劃" },
+                ]
+            },
+            {
+                id: "culture", name: "CULTURE", zh: "文化",
+                children: [
+                    { id: "feng-shui", name: "Feng Shui", zh: "風水" },
+                    { id: "coin-divination", name: "Coin Divination", zh: "硬幣占卜" }
+                ]
+            }
+        ]
+    },
+
+    {
+        id: "make", name: "MAKE", zh: "實作",
+        children: [
+            {
+                id: "model", name: "MODEL", zh: "模型",
+                children: [
+                    { id: "gunpla", name: "Gunpla", zh: "鋼普拉" },
+                    { id: "model-making", name: "Model Making", zh: "模型製作" },
+                    { id: "model-modification", name: "Model Modification", zh: "模型改造" },
+                    { id: "model-competition", name: "Model Competition", zh: "模型比賽" },
+                    { id: "diorama", name: "Diorama", zh: "情境模型" },
+                    { id: "model-lighting", name: "Model Lighting", zh: "模型燈光",
+		links: [
+        {
+            name: "模型電飾",
+            url: "https://www.youtube.com/playlist?list=PLZ_HgrN4zTmE"
+        }
+    ],
+ }
+                ]
+            },
+            {
+                id: "mold-making", name: "MOLD MAKING", zh: "翻模",
+                children: [
+                    { id: "silicone-mold", name: "Silicone Mold", zh: "矽膠翻模",
+		links: [
+        {
+            name: "翻模與灌注系列",
+            url: "https://www.youtube.com/playlist?list=PLKuYv-7CjJmaMLBHXk_ONoTsspNVqcmqj"
+        }
+    ],
+ },
+                    { id: "resin-casting", name: "Resin Casting", zh: "樹脂澆注",
+		links: [
+        {
+            name: "翻模與灌注系列",
+            url: "https://www.youtube.com/playlist?list=PLKuYv-7CjJmaMLBHXk_ONoTsspNVqcmqj"
+        }
+    ],
+ },
+                    { id: "resin-replication", name: "Resin Replication", zh: "樹脂複製",
+		links: [
+        {
+            name: "翻模與灌注系列",
+            url: "https://www.youtube.com/playlist?list=PLKuYv-7CjJmaMLBHXk_ONoTsspNVqcmqj"
+        }
+    ],
+ }
+                ]
+            },
+            {
+                id: "electronics", name: "ELECTRONICS", zh: "電子",
+                children: [
+                    {
+                        id: "microcontroller", name: "Microcontroller", zh: "微控制器",
+                        children: [
+                            { id: "arduino", name: "Arduino", zh: "Arduino" },
+                            { id: "esp32", name: "ESP32", zh: "ESP32" }
+                        ]
+                    },
+                    {
+                        id: "led", name: "LED", zh: "LED",
+                        children: [
+                            { id: "ws2812b", name: "WS2812B", zh: "WS2812B" }
+                        ]
+                    },
+                    { id: "circuit", name: "Circuit", zh: "電路" },
+                    {
+                        id: "power-supply", name: "Power Supply", zh: "電源",
+                        children: [
+                            { id: "dc-dc", name: "DC-DC", zh: "DC-DC" }
+                        ]
+                    },
+                    { id: "lighting-control", name: "Lighting Control", zh: "燈光控制" },
+
+
+                ]
+            },
+            {
+                id: "tech-engineering", name: "TECH & ENGINEERING", zh: "科技與工程",
+                children: [
+                    {
+                        id: "computer", name: "COMPUTER", zh: "電腦",
+                        children: [
+                            { id: "computer-assembly", name: "Computer Assembly", zh: "電腦組裝" },
+                            { id: "computer-repair", name: "Computer Repair", zh: "電腦維修" },
+                            { id: "computer-hardware", name: "Computer Hardware", zh: "電腦硬體" },
+                            { id: "troubleshooting", name: "Troubleshooting", zh: "故障排除" }
+                        ]
+                    },
+                    {
+                        id: "network", name: "NETWORK", zh: "網路",
+                        children: [
+                            { id: "network-planning", name: "Network Planning", zh: "網路規劃" },
+                            { id: "network-setup", name: "Network Setup", zh: "網路架設" },
+                            { id: "network-cabling", name: "Network Cabling", zh: "網路佈線" }
+                        ]
+                    },
+                    {
+                        id: "low-voltage", name: "LOW-VOLTAGE", zh: "弱電",
+                        children: [
+                            { id: "low-voltage-engineering", name: "Low-Voltage Engineering", zh: "弱電工程" },
+                            { id: "cctv", name: "CCTV", zh: "監視系統" },
+                            { id: "projector-installation", name: "Projector Installation", zh: "投影設備安裝" }
+                        ]
+                    }
+                ]
+            }
+        ]
+    },
+
+    {
+        id: "create", name: "CREATE", zh: "創作",
+        children: [
+            {
+                id: "design", name: "DESIGN", zh: "設計",
+                children: [
+                    { id: "illustrator", name: "Illustrator", zh: "Illustrator" },
+                    { id: "photoshop", name: "Photoshop", zh: "Photoshop" },
+                    { id: "graphic-design", name: "Graphic Design", zh: "平面設計" },
+                    { id: "logo-design", name: "Logo Design", zh: "Logo 設計" },
+                    { id: "business-card-design", name: "Business Card Design", zh: "名片設計" }
+                ]
+            },
+            {
+                id: "photography", name: "PHOTOGRAPHY", zh: "攝影",
+                children: [
+                    { id: "photography-topic", name: "Photography", zh: "攝影" },
+                    { id: "wedding-photography", name: "Wedding Photography", zh: "婚禮攝影" },
+
+                ]
+            },
+            {
+                id: "video", name: "VIDEO", zh: "影像",
+                children: [
+                    { id: "video-production", name: "Video Production", zh: "影片製作" },
+                    { id: "video-editing", name: "Video Editing", zh: "影片剪輯" },
+                    { id: "subtitle", name: "Subtitle", zh: "字幕" }
+                ]
+            },
+            {
+                id: "ai-creation", name: "AI CREATION", zh: "AI 創作",
+                children: [
+                    { id: "create-ai-image", name: "AI Image", zh: "AI 影像" },
+                    { id: "create-ai-video", name: "AI Video", zh: "AI 影片" },
+                    { id: "prompt-design", name: "Prompt Design", zh: "Prompt 設計" },
+                    { id: "create-comfyui", name: "ComfyUI", zh: "ComfyUI" },
+                    { id: "create-lora", name: "LoRA", zh: "LoRA" }
+                ]
+            }
+        ]
+    },
+
+    {
+        id: "teach", name: "TEACH", zh: "教學",
+        children: [
+            {
+                id: "education", name: "EDUCATION", zh: "教育",
+                children: [
+                    { id: "general-education", name: "General Education", zh: "通識教育" },
+                    { id: "fisheries-education", name: "Fisheries Education", zh: "漁業科技與管理" },
+		    {    id: "seafarer-training",     name: "Seafarer Training",     zh: "海員訓練" },
+                ]
+            },
+            {
+                id: "online-teaching", name: "ONLINE TEACHING", zh: "遠距教學",
+                children: [
+                    { id: "online-course", name: "Online Course", zh: "遠距課程" }
+                ]
+            },
+            {
+                id: "model-teaching", name: "MODEL TEACHING", zh: "模型教學",
+                children: [
+                    { id: "model-making-teaching", name: "Model Making Teaching", zh: "模型製作教學" },
+                    { id: "model-modification-teaching", name: "Model Modification Teaching", zh: "模型改造教學" },
+                    { id: "led-teaching", name: "LED Teaching", zh: "LED 教學" },
+                    { id: "circuit-teaching", name: "Circuit Teaching", zh: "電路教學" }
+                ]
+            },
+            {
+                id: "ai-education", name: "AI × EDUCATION", zh: "AI × 教育",
+                children: [
+                    { id: "ai-teaching-application", name: "AI Teaching Application", zh: "AI 教學應用" },
+                    { id: "ai-tools-education", name: "AI Tools in Education", zh: "教育 AI 工具" },
+
+                ]
+            }
+        ]
+    },
+
+    {
+        id: "share", name: "SHARE", zh: "分享",
+        children: [
+            {
+                id: "youtube", name: "YOUTUBE", zh: "YouTube",
+		links: [
+        {
+            name: "YouTube Channel",
+            url: "https://www.youtube.com/@Tungbow"
+        }
+    ],
+
+
+                children: [
+                    { id: "youtuber", name: "YouTuber", zh: "YouTuber" },
+                    { id: "model-content", name: "Model Content", zh: "模型內容" },
+                    { id: "computer-content", name: "Computer Content", zh: "電腦內容" },
+                    { id: "teaching-content", name: "Teaching Content", zh: "教學內容" }
+                ]
+            },
+            {
+                id: "content-social", name: "SOCIAL MEDIA", zh: "社群",
+                children: [
+                    { id: "social-media", name: "Social Media", zh: "社群媒體",links: [
+        
+        {
+            name: "Facebook",
+            url: "https://www.facebook.com/tungbowplamodel/"
+        },
+        {
+            name: "Instagram",
+            url: "https://www.instagram.com/tungbow_life/"
+        },
+	{
+            name: "Threads",
+            url: "https://www.threads.com/@tungbow_life"
+        }
+    ] 
+
+
+}
+                ]
+            },
+            {
+                id: "public-speaking", name: "PUBLIC SPEAKING", zh: "公開分享",
+                children: [
+                    { id: "seminar", name: "Seminar", zh: "研習／講座" },
+                    { id: "workshop", name: "Workshop", zh: "工作坊" },
+                    { id: "experience-sharing", name: "Experience Sharing", zh: "經驗分享" }
+                ]
+            }
+        ]
+    }
+];
+
+const projects = [
+    {
+        id: "mg-gundam-x",
+        title: "MG Gundam X",
+        subtitle: "MODEL × ESP32 × WS2812B",
+        description: "模型改造、電子控制與 LED 燈效整合的跨領域實作。",
+        tags: ["gunpla","model-modification","model-lighting","esp32","ws2812b","led","circuit","dc-dc","lighting-control","lighting-control"]
+    },
+    {
+        id: "yangkou-business-card",
+        title: "湯口工作室名片",
+        subtitle: "DESIGN × ILLUSTRATOR × BUSINESS CARD",
+        description: "從視覺設計到實際印刷的名片設計作品。",
+        tags: ["illustrator","photoshop","graphic-design","logo-design","business-card-design"]
+    },
+{
+    id: "2s2pbattery",
+    title: "2S2P 供電系統",
+    subtitle: "BATTERY × POWER MANAGEMENT",
+    description: "以 2S2P 鋰電池組提供 7.4V 系統電源，搭配 DC-DC 降壓模組轉換為 5V，供應模型內 LED 與電子控制系統。",
+    tags: [
+        "power-supply",
+        "dc-dc",
+                "esp32",
+        "ws2812b",
+        "model-lighting"
+    ]
+},
+
+    {
+        id: "ai-image-creation",
+        title: "AI Image Creation",
+        subtitle: "GENERATIVE AI × COMFYUI × LoRA",
+        description: "生成式 AI、Prompt、ComfyUI 與 LoRA 的影像創作實驗。",
+        tags: ["generative-ai","ai-tools","ai-application","prompt-engineering","comfyui","lora","ai-image","prompt-design"]
+    }
+];
+
+const experiences = [
+    {
+        id: "online-teaching-seminar",
+        title: "遠距教學研習",
+        subtitle: "從 3 個問題開始：我的遠距教學實踐與分享",
+        description: "面向不同領域教師的遠距教學實務分享。",
+        tags: ["online-course","course-planning","digital-teaching-materials","online-interaction","online-assessment","course-management","teaching-video","online-teaching-seminar","teacher-training","seminar","public-sharing","experience-sharing"]
+    },
+ 
+{
+    id: "people-and-nature",
+    title: "人與自然",
+    subtitle: "通識教育 × 自然科學",
+    description: "大學通識教育課程，探討人與自然環境之間的關係。",
+    tags: ["general-education", "natural-science"]
+},
+{
+    id: "nature-ecological-conservation",
+    title: "自然生態保育",
+    subtitle: "通識教育 × 生態保育",
+    description: "大學通識教育課程，探討自然環境、生態系統與生態保育。",
+    tags: ["general-education", "environmental-ecology"]
+},
+{
+    id: "natural-science-topics",
+    title: "自然科學專題探討",
+    subtitle: "通識教育 × 自然科學",
+    description: "以自然科學議題為核心的通識教育專題課程。",
+    tags: ["general-education", "natural-science"]
+},
+{
+    id: "technology-integration-university-education",
+    title: "科際整合與大學教育",
+    subtitle: "通識教育 × 科際整合",
+    description: "探討科際整合與大學教育發展的通識教育課程。",
+    tags: ["general-education"]
+},
+{
+    id: "net-zero-generation",
+    title: "淨零新世代",
+    subtitle: "通識教育 × 永續發展",
+    description: "探討淨零轉型、環境永續與新世代所面臨的發展議題。",
+    tags: ["general-education", "environmental-ecology"]
+},
+{
+    id: "creative-thinking-problem-solving",
+    title: "創造思考與問題解決",
+    subtitle: "通識教育 × 創意思考",
+    description: "培養創造思考能力，並運用系統化方法進行問題分析與解決。",
+    tags: ["general-education"]
+},
+{
+    id: "aquatic-business-management",
+    title: "水產經營學",
+    subtitle: "漁業科技與管理 × 水產經營",
+    description: "探討水產事業經營與管理相關內容的專業課程。",
+    tags: ["fisheries-education", "fisheries"]
+},
+{
+    id: "aquatic-resource-science",
+    title: "水產資源學",
+    subtitle: "漁業科技與管理 × 水產資源",
+    description: "探討水產資源及其利用與管理相關內容的專業課程。",
+    tags: ["fisheries-education", "fisheries", "aquatic-resource-conservation"]
+},
+{
+    id: "biological-oceanography",
+    title: "生物海洋學",
+    subtitle: "漁業科技與管理 × 海洋科學",
+    description: "探討海洋生物與海洋環境之間關係的專業課程。",
+    tags: ["fisheries-education", "marine-science"]
+},
+{
+    id: "marine-ecology",
+    title: "海洋生態學",
+    subtitle: "漁業科技與管理 × 海洋生態",
+    description: "探討海洋生態系統、生物與環境交互作用的專業課程。",
+    tags: ["fisheries-education", "fisheries-ecology", "marine-science"]
+},
+{
+    id: "marine-meteorology",
+    title: "海洋氣象學",
+    subtitle: "漁業科技與管理 × 海洋氣象",
+    description: "探討海洋氣象與海洋環境及漁業活動相關內容的專業課程。",
+    tags: ["fisheries-education", "marine-science", "meteorology"]
+},
+{
+    id: "seamanship-practice",
+    title: "船藝實習",
+    subtitle: "漁業科技與管理 × 船藝實務",
+    description: "以船藝操作與實務訓練為核心的專業實習課程。",
+    tags: ["fisheries-education", "fisheries"]
+},
+{
+    id: "seamanship",
+    title: "船藝學",
+    subtitle: "漁業科技與管理 × 船藝",
+    description: "探討船舶操作、船藝與航海實務相關內容的專業課程。",
+    tags: ["fisheries-education", "fisheries"]
+},
+{
+    id: "fish-ecology",
+    title: "魚類生態學",
+    subtitle: "漁業科技與管理 × 魚類生態",
+    description: "探討魚類生態、族群與其環境關係的專業課程。",
+    tags: ["fisheries-education", "fish-biology", "fisheries-ecology"]
+},
+{
+    id: "fishing-gear",
+    title: "漁具學",
+    subtitle: "漁業科技與管理 × 漁具",
+    description: "探討各類漁具、漁具構造與漁具應用相關內容的專業課程。",
+    tags: ["fisheries-education"]
+},
+{
+    id: "fishing-methods",
+    title: "漁法學",
+    subtitle: "漁業科技與管理 × 漁法",
+    description: "探討各類漁法、作業方式與漁業技術相關內容的專業課程。",
+    tags: ["fisheries-education"]
+},
+{
+    id: "fishing-vessel-introduction",
+    title: "漁船概論",
+    subtitle: "漁業科技與管理 × 漁船",
+    description: "介紹漁船基本構造、分類與漁業作業相關內容的專業課程。",
+    tags: ["fisheries-education", "fisheries"]
+},
+{
+    id: "fishing-ground-science",
+    title: "漁場學",
+    subtitle: "漁業科技與管理 × 漁場",
+    description: "探討漁場形成、環境條件與漁業資源分布相關內容的專業課程。",
+    tags: ["fisheries-education", "fisheries", "fisheries-ecology"]
+},
+{
+    id: "fisheries-data-generative-ai",
+    title: "漁業數據與生成式 AI",
+    subtitle: "漁業科技與管理 × Data × Generative AI",
+    description: "結合漁業數據分析與生成式 AI 應用的跨領域專業課程。",
+    tags: ["fisheries-education", "fisheries", "ai-application", "generative-ai"]
+},
+{
+    id: "marine-engineering-introduction",
+    title: "輪機概論",
+    subtitle: "漁業科技與管理 × 輪機",
+    description: "介紹船舶輪機系統與船舶動力相關基礎概念的專業課程。",
+    tags: ["fisheries-education", "fisheries"]
+},    
+
+{
+    id: "aquatic-resource-conservation",
+    title: "水產資源保育",
+    subtitle: "海員訓練 × 水產資源",
+    description: "海員訓練課程，介紹水產資源保育與永續利用相關內容。",
+    tags: ["seafarer-training"]
+},
+
+{
+    id: "overseas-operation-guidelines",
+    title: "國外作業須知",
+    subtitle: "海員訓練 × 國外作業",
+    description: "海員訓練課程，介紹國外作業相關注意事項與基本規範。",
+    tags: ["seafarer-training"]
+},
+
+{
+    id: "fishing-vessel-operation-safety",
+    title: "漁船作業安全",
+    subtitle: "海員訓練 × 作業安全",
+    description: "海員訓練課程，介紹漁船作業過程中的安全事項與基本安全觀念。",
+    tags: ["seafarer-training"]
+},
+
+{
+    id: "fisheries-technology",
+    title: "漁業技術",
+    subtitle: "海員訓練 × 漁業技術",
+    description: "海員訓練課程，介紹漁業作業相關技術與實務。",
+    tags: ["seafarer-training"]
+},
+
+{
+    id: "human-relations",
+    title: "人際關係",
+    subtitle: "海員訓練 × 人際關係",
+    description: "海員訓練課程，探討船上工作與生活中的人際互動及溝通。",
+    tags: ["seafarer-training"]
+},
+
+{
+    id: "oceanography-and-meteorology",
+    title: "海洋學與氣象學",
+    subtitle: "海員訓練 × 海洋與氣象",
+    description: "海員訓練課程，介紹海洋環境與氣象相關基礎知識。",
+    tags: ["seafarer-training"]
+},
+
+{
+    id: "fishermen-vessel-safety-rules",
+    title: "漁民與漁船安全規則",
+    subtitle: "海員訓練 × 安全規則",
+    description: "海員訓練課程，介紹漁民及漁船作業相關安全規則。",
+    tags: ["seafarer-training"]
+},
+
+{
+    id: "catch-handling-and-storage",
+    title: "漁獲物裝卸與存放",
+    subtitle: "海員訓練 × 漁獲處理",
+    description: "海員訓練課程，介紹漁獲物裝卸、處理與存放相關作業。",
+    tags: ["seafarer-training"]
+},
+
+{
+    id: "international-law-of-the-sea",
+    title: "國際海洋法",
+    subtitle: "海員訓練 × 國際海洋法",
+    description: "海員訓練課程，介紹國際海洋法相關基本概念。",
+    tags: ["seafarer-training"]
+},
+
+{
+    id: "fisheries-regulations",
+    title: "漁業法規",
+    subtitle: "海員訓練 × 漁業法規",
+    description: "海員訓練課程，介紹漁業相關法規與作業規範。",
+    tags: ["seafarer-training"]
+},
+
+{
+    id: "responsible-fisheries",
+    title: "責任制漁業",
+    subtitle: "海員訓練 × 責任制漁業",
+    description: "海員訓練課程，介紹責任制漁業及漁業資源永續利用相關概念。",
+    tags: ["seafarer-training"]
+},
+
+{
+    id: "fishing-gear-and-methods",
+    title: "漁具漁法",
+    subtitle: "海員訓練 × 漁具漁法",
+    description: "海員訓練課程，介紹漁具與漁法相關基本知識。",
+    tags: ["seafarer-training"]
+},
+
+{
+    id: "catch-handling-overview",
+    title: "漁獲物處理大意",
+    subtitle: "海員訓練 × 漁獲物處理",
+    description: "海員訓練課程，介紹漁獲物處理相關基本概念。",
+    tags: ["seafarer-training"]
+},
+
+{
+    id: "people-and-nature-online",
+    title: "人與自然－遠距教學",
+    subtitle: "遠距課程 × 通識教育",
+    description: "以遠距教學方式進行「人與自然」通識教育課程。",
+    tags: ["online-course"]
+},
+
+{
+    id: "natural-science-topics-online",
+    title: "自然科學專題探討－遠距教學",
+    subtitle: "遠距課程 × 自然科學",
+    description: "以遠距教學方式進行自然科學專題探討課程。",
+    tags: ["online-course"]
+},
+
+{
+    id: "affective-general-education-online",
+    title: "情意通識專題探討－遠距教學",
+    subtitle: "遠距課程 × 通識教育",
+    description: "以遠距教學方式進行情意通識專題探討課程。",
+    tags: ["online-course"]
+},
+
+{
+    id: "creative-thinking-problem-solving-online",
+    title: "創造思考與問題解決－遠距教學",
+    subtitle: "遠距課程 × 創意思考",
+    description: "以遠距教學方式進行創造思考與問題解決課程。",
+    tags: ["online-course"]
+},
+{
+        id: "computer-low-voltage",
+        title: "電腦與弱電工程",
+        subtitle: "COMPUTER × NETWORK × LOW-VOLTAGE",
+        description: "從電腦組裝與維修，到辦公室網路與弱電系統規劃。",
+        tags: ["computer-assembly","computer-repair","computer-hardware","troubleshooting","network-planning","network-setup","network-cabling","low-voltage-engineering"]
+    }
+];
+
+/* =========================================================
+   TREE ENGINE
+   ========================================================= */
+
+const stage = document.getElementById("map-stage");
+const svg = document.getElementById("connections");
+const shell = document.getElementById("map-shell");
+
+const allTags = [];
+const tagMap = new Map();
+
+function flatten(nodes, parent = null, level = 0, path = []) {
+    nodes.forEach(node => {
+        const item = {
+            ...node,
+            parent,
+            level,
+            path: [...path, node.id]
+        };
+        allTags.push(item);
+        tagMap.set(node.id, item);
+        if (node.children) flatten(node.children, node.id, level + 1, item.path);
+    });
+}
+
+flatten(tagTree);
+
+const duplicateTagIds = allTags
+    .map(tag => tag.id)
+    .filter((id, index, arr) => arr.indexOf(id) !== index);
+
+if (duplicateTagIds.length) {
+    console.warn("Duplicate map tag IDs:", [...new Set(duplicateTagIds)]);
+}
+
+const contentTagAliases = {
+    "fisheries-ecology-topic": "fisheries-ecology",
+    "photography-topic": "photography",
+    "create-ai-image": "ai-image",
+    "create-ai-video": "ai-video",
+    "create-comfyui": "comfyui",
+    "create-lora": "lora",
+    "teach-digital-transformation": "digital-transformation"
+};
+
+function contentForTag(id) {
+    const contentId = contentTagAliases[id] || id;
+
+    return {
+        projects: projects.filter(p => p.tags.includes(contentId)),
+        experiences: experiences.filter(e => e.tags.includes(contentId))
+    };
+}
+
+function hasContent(id) {
+    const c = contentForTag(id);
+    const node = tagMap.get(id);
+    const linkCount = node && Array.isArray(node.links) ? node.links.length : 0;
+
+    return c.projects.length + c.experiences.length + linkCount > 0;
+}
+
+/*
+    Mind-map layout:
+    ROOT
+      ↓
+    5 major branches
+      ↓
+    category
+      ↓
+    leaf
+*/
+
+const BASE_WIDTH = 1400;
+const BASE_HEIGHT = 1000;
+const LEVEL_GAP = 205;
+const SIBLING_GAP = 255;
+const SIDE_PADDING = 90;
+
+const positions = {};
+let visibleUnits = new Map();
+
+const visible = new Set(["root", ...tagTree.map(branch => branch.id)]);
+let selectedId = null;
+
+function visibleChildren(node) {
+    return (node.children || []).filter(child => visible.has(child.id));
+}
+
+/*
+   The map only allocates space for what is currently visible.
+   This is the key behavior we want:
+
+   Initial:
+                 NICK HSU
+                    |
+       EXPLORE MAKE CREATE TEACH SHARE
+
+   Click MAKE:
+                 NICK HSU
+                    |
+                   MAKE
+                    |
+          MODEL / MOLD / ELECTRONICS / ...
+
+   The canvas grows only when the expanded branch needs more room.
+*/
+function measureVisible(node) {
+    const children = visibleChildren(node);
+
+    if (!children.length) {
+        visibleUnits.set(node.id, 1);
+        return 1;
+    }
+
+    const total = children.reduce(
+        (sum, child) => sum + measureVisible(child),
+        0
+    );
+
+    visibleUnits.set(node.id, Math.max(1, total));
+    return Math.max(1, total);
+}
+
+function placeVisibleSubtree(node, left, level) {
+    const units = visibleUnits.get(node.id) || 1;
+    const span = units * SIBLING_GAP;
+    const x = left + span / 2;
+    const y = 105 + level * LEVEL_GAP;
+
+    positions[node.id] = { x, y };
+
+    const children = visibleChildren(node);
+    if (!children.length) return;
+
+    let childLeft = left;
+
+    children.forEach(child => {
+        const childUnits = visibleUnits.get(child.id) || 1;
+        const childSpan = childUnits * SIBLING_GAP;
+
+        placeVisibleSubtree(child, childLeft, level + 1);
+        childLeft += childSpan;
+    });
+}
+
+function recalculateLayout() {
+    Object.keys(positions).forEach(key => delete positions[key]);
+    visibleUnits = new Map();
+
+    const rootNode = {
+        id: "root",
+        children: tagTree
+    };
+
+    measureVisible(rootNode);
+
+    const rootUnits = visibleUnits.get("root") || 5;
+    const contentWidth = Math.max(
+        BASE_WIDTH,
+        rootUnits * SIBLING_GAP + SIDE_PADDING * 2
+    );
+
+    const maxVisibleLevel = allTags.reduce((max, tag) => {
+        if (visible.has(tag.id)) return Math.max(max, tag.level);
+        return max;
+    }, 0);
+
+    const contentHeight = Math.max(
+        BASE_HEIGHT,
+        180 + (maxVisibleLevel + 1) * LEVEL_GAP
+    );
+
+    stage.style.width = `${contentWidth}px`;
+    stage.style.height = `${contentHeight}px`;
+
+    svg.setAttribute("viewBox", `0 0 ${contentWidth} ${contentHeight}`);
+
+    positions.root = {
+        x: contentWidth / 2,
+        y: 70
+    };
+
+    const majorChildren = tagTree.filter(branch => visible.has(branch.id));
+    const totalUnits = majorChildren.reduce(
+        (sum, branch) => sum + (visibleUnits.get(branch.id) || 1),
+        0
+    );
+
+    const totalSpan = totalUnits * SIBLING_GAP;
+    let left = (contentWidth - totalSpan) / 2;
+
+    majorChildren.forEach(branch => {
+        const units = visibleUnits.get(branch.id) || 1;
+        const span = units * SIBLING_GAP;
+
+        placeVisibleSubtree(branch, left, 1);
+        left += span;
+    });
+}
+
+function nodeLevelClass(node) {
+    if (node.id === "root") return "root";
+    if (node.level === 0) return "major";
+    if (node.level === 1) return "child";
+    return "leaf";
+}
+
+function nodeText(id) {
+    if (id === "root") {
+        return `
+            <span class="node-zh">許 智程</span>
+            <span class="node-en">NICK HSU</span>
+            <span class="node-status">PERSONAL MAP</span>
+        `;
+    }
+
+    const node = tagMap.get(id);
+    const linked = hasContent(id);
+
+    return `
+        <span class="node-zh">${node.zh}</span>
+        <span class="node-en">${node.name}</span>
+        <span class="node-status">${linked ? "✦ CONNECTED" : "— GROWING"}</span>
+    `;
+}
+
+function createNode(id) {
+    const el = document.createElement("button");
+    const node = id === "root"
+        ? { id: "root", level: -1, name: "NICK HSU", zh: "智程" }
+        : tagMap.get(id);
+
+    el.id = `node-${id}`;
+    el.className = `map-node ${nodeLevelClass(node)} ${id !== "root" && hasContent(id) ? "has-content" : ""}`;
+    el.innerHTML = nodeText(id);
+
+    el.addEventListener("click", event => {
+        event.stopPropagation();
+        if (id === "root") {
+            clearSelection();
+            return;
+        }
+        selectNode(id);
+    });
+
+    stage.appendChild(el);
+    return el;
+}
+
+createNode("root");
+allTags.forEach(tag => createNode(tag.id));
+
+function makeCurve(a, b) {
+    const dy = b.y - a.y;
+    const midY = a.y + dy * 0.52;
+
+    return `M ${a.x} ${a.y}
+            C ${a.x} ${midY},
+              ${b.x} ${midY},
+              ${b.x} ${b.y}`;
+}
+
+function drawBranches() {
+    svg.innerHTML = "";
+
+    allTags.forEach(node => {
+        if (!visible.has(node.id)) return;
+
+        const parentId = node.parent || "root";
+        if (!visible.has(parentId)) return;
+
+        const a = positions[parentId];
+        const b = positions[node.id];
+
+        if (!a || !b) return;
+
+        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        path.classList.add("branch-path");
+
+        if (selectedId) {
+            const selected = tagMap.get(selectedId);
+            const selectedPath = selected ? selected.path : [];
+
+            const active = selectedId === node.id || selectedPath.includes(node.id) || selectedPath.includes(parentId);
+            if (active) path.classList.add("active");
+            else path.classList.add("dimmed");
+        }
+
+        path.setAttribute("d", makeCurve(a,b));
+        svg.appendChild(path);
+    });
+}
+
+function renderNodes() {
+    recalculateLayout();
+
+    const ids = ["root", ...allTags.map(t => t.id)];
+
+    ids.forEach(id => {
+        const el = document.getElementById(`node-${id}`);
+        if (!el) return;
+
+        const pos = positions[id];
+        const shouldShow = visible.has(id);
+
+        if (!pos || !shouldShow) {
+            el.classList.remove("visible", "selected");
+            return;
+        }
+
+        el.style.left = `${pos.x}px`;
+        el.style.top = `${pos.y}px`;
+        el.classList.add("visible");
+        el.classList.toggle("selected", selectedId === id);
+    });
+
+    drawBranches();
+}
+
+function openChildren(id) {
+    const node = tagMap.get(id);
+    if (!node) return;
+
+    if (node.children) {
+        node.children.forEach(child => visible.add(child.id));
+    }
+}
+
+function closeDescendants(id) {
+    const node = tagMap.get(id);
+    if (!node || !node.children) return;
+
+    node.children.forEach(child => {
+        closeDescendants(child.id);
+        visible.delete(child.id);
+    });
+
+    if (selectedId && selectedId !== id) {
+        const selectedNode = tagMap.get(selectedId);
+        if (selectedNode && selectedNode.path.includes(id)) {
+            selectedId = id;
+        }
+    }
+}
+
+function selectNode(id) {
+    const node = tagMap.get(id);
+    if (!node) return;
+
+    selectedId = id;
+
+    /*
+       Clicking a node opens its next branch.
+       Clicking it again closes that branch.
+    */
+    const children = node.children || [];
+
+    if (children.length) {
+        const alreadyOpen = children.every(child => visible.has(child.id));
+
+        if (alreadyOpen) {
+            closeDescendants(id);
+        } else {
+            openChildren(id);
+        }
+    }
+
+    renderNodes();
+    updateInfo(node);
+}
+
+function clearSelection() {
+    selectedId = null;
+
+    allTags.forEach(tag => {
+        if (tag.level > 0) visible.delete(tag.id);
+        else visible.add(tag.id);
+    });
+
+    visible.add("root");
+    renderNodes();
+    closeInfo();
+}
+
+function updateInfo(node) {
+    const content = contentForTag(node.id);
+
+    document.getElementById("info-type").textContent =
+        node.level === 0 ? "MAIN BRANCH" : node.level === 1 ? "CATEGORY" : "TAG";
+
+    document.getElementById("info-title").textContent = node.name;
+    document.getElementById("info-zh").textContent = node.zh;
+
+    /*
+       TAG 個別介紹：
+       只要在 tagTree 的節點加入 description: "..."，
+       右下角資訊視窗就會自動使用這段文字。
+       沒有設定 description 時，才使用原本的系統提示。
+    */
+    // links 會直接依照目前節點的 links 陣列自動計算，
+    // 未來新增或刪除連結都不需要修改這段程式。
+    const linkCount = Array.isArray(node.links) ? node.links.length : 0;
+    const projectCount = content.projects.length;
+    const experienceCount = content.experiences.length;
+    const totalContentCount = projectCount + experienceCount + linkCount;
+
+    let description = node.description || "";
+
+    if (!description) {
+        if (totalContentCount > 0) {
+            description =
+                `這個節點目前連結到 ${projectCount} 個作品、` +
+                `${experienceCount} 段經驗與 ${linkCount} 個連結。`;
+        } else if (node.children) {
+            description = "繼續向下探索，可以看到這個分支的下一層內容。";
+        } else {
+            description = "這個節點目前還沒有建立內容，但它會保留在地圖中，等待未來成長。";
+        }
+    }
+
+    document.getElementById("info-description").textContent = description;
+
+    document.getElementById("info-count").textContent =
+        `這個節點目前連結到 ${projectCount} 個作品、${experienceCount} 段經驗與 ${linkCount} 個連結。`;
+
+    let html = "";
+
+    /* =====================================================
+       TAG LINKS
+       -----------------------------------------------------
+       只要在 tagTree 的節點加入：
+       links: [
+           { name: "Facebook", url: "https://..." },
+           { name: "Instagram", url: "https://..." }
+       ]
+       右下角資訊視窗就會自動顯示可點擊連結。
+       ===================================================== */
+    if (node.links && node.links.length) {
+        html += `
+            <div class="mb-5">
+                <h3 class="text-xs tracking-[0.16em] text-gray-300 mb-3">LINKS</h3>
+                <div class="space-y-2">
+                    ${node.links.map(link => `
+                        <a
+                            href="${escapeHtml(link.url)}"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="flex items-center justify-between rounded-lg border border-gray-800 bg-gray-800/40 px-3 py-2 text-sm text-indigo-300 hover:text-white hover:border-indigo-500/50 hover:bg-indigo-500/10 transition"
+                        >
+                            <span>${escapeHtml(link.name)}</span>
+                            <span class="text-gray-500">↗</span>
+                        </a>
+                    `).join("")}
+                </div>
+            </div>
+        `;
+    }
+
+    if (content.projects.length) {
+        html += `<h3 class="text-xs tracking-[0.16em] text-gray-300 mb-3">PROJECTS</h3>`;
+        content.projects.forEach(project => {
+            html += `
+                <div class="rounded-lg border border-gray-800 bg-gray-800/40 p-3 mb-3">
+                    <p class="text-white text-sm font-semibold">${escapeHtml(project.title)}</p>
+                    <p class="text-gray-500 text-xs mt-1">${escapeHtml(project.subtitle)}</p>
+                </div>
+            `;
+        });
+    }
+
+    if (content.experiences.length) {
+        html += `<h3 class="text-xs tracking-[0.16em] text-gray-300 mb-3 mt-5">EXPERIENCES</h3>`;
+        content.experiences.forEach(exp => {
+            html += `
+                <div class="rounded-lg border border-gray-800 bg-gray-800/40 p-3 mb-3">
+                    <p class="text-white text-sm font-semibold">${escapeHtml(exp.title)}</p>
+                    <p class="text-gray-500 text-xs mt-1">${escapeHtml(exp.subtitle)}</p>
+                </div>
+            `;
+        });
+    }
+
+    if (node.children && node.children.length) {
+        html += `
+            <div class="mt-5 pt-4 border-t border-gray-800">
+                <p class="text-xs text-gray-500 mb-2">NEXT BRANCH</p>
+                <div>
+                    ${node.children.map(child => `<span class="tag-pill">${escapeHtml(child.name)}</span>`).join("")}
+                </div>
+            </div>
+        `;
+    }
+
+    document.getElementById("info-content").innerHTML = html;
+    document.getElementById("info-panel").classList.add("show");
+    document.getElementById("breadcrumb-current").textContent = node.name;
+}
+
+function closeInfo() {
+    document.getElementById("info-panel").classList.remove("show");
+    document.getElementById("breadcrumb-current").textContent = "NICK HSU";
+}
+
+function escapeHtml(value) {
+    return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+}
+
+/* =========================================================
+   ZOOM / PAN
+   ========================================================= */
+
+let scale = 1;
+let panX = 0;
+let panY = 0;
+
+function applyTransform() {
+    stage.style.transform = `translate(calc(-50% + ${panX}px), calc(-50% + ${panY}px)) scale(${scale})`;
+}
+
+function zoomAt(delta) {
+    scale = Math.max(0.65, Math.min(1.35, scale + delta));
+    applyTransform();
+}
+
+function resetView() {
+    scale = window.innerWidth < 768 ? 0.78 : 1;
+    panX = 0;
+    panY = 0;
+    applyTransform();
+}
+
+document.getElementById("zoom-in").addEventListener("click", () => zoomAt(0.08));
+document.getElementById("zoom-out").addEventListener("click", () => zoomAt(-0.08));
+document.getElementById("reset-view").addEventListener("click", () => {
+    clearSelection();
+    resetView();
+});
+
+document.getElementById("close-info").addEventListener("click", closeInfo);
+
+/* Mouse / touch dragging */
+
+let dragging = false;
+let dragStartX = 0;
+let dragStartY = 0;
+let initialPanX = 0;
+let initialPanY = 0;
+
+shell.addEventListener("pointerdown", event => {
+    if (event.target.closest(".map-node") || event.target.closest(".map-controls")) return;
+
+    // Prevent the browser from starting text selection when the user begins dragging.
+    if (window.getSelection) {
+        window.getSelection().removeAllRanges();
+    }
+
+    dragging = true;
+    shell.classList.add("dragging");
+    dragStartX = event.clientX;
+    dragStartY = event.clientY;
+    initialPanX = panX;
+    initialPanY = panY;
+    shell.setPointerCapture(event.pointerId);
+});
+
+shell.addEventListener("pointermove", event => {
+    if (!dragging) return;
+
+    // Keep accidental text selection from appearing during a drag.
+    if (window.getSelection) {
+        window.getSelection().removeAllRanges();
+    }
+
+    panX = initialPanX + (event.clientX - dragStartX);
+    panY = initialPanY + (event.clientY - dragStartY);
+    applyTransform();
+});
+
+shell.addEventListener("pointerup", event => {
+    dragging = false;
+    shell.classList.remove("dragging");
+    try { shell.releasePointerCapture(event.pointerId); } catch {}
+});
+
+shell.addEventListener("pointercancel", () => {
+    dragging = false;
+    shell.classList.remove("dragging");
+});
+
+shell.addEventListener("wheel", event => {
+    event.preventDefault();
+    zoomAt(event.deltaY < 0 ? 0.05 : -0.05);
+}, { passive: false });
+
+window.addEventListener("resize", resetView);
+
+/* Initial state */
+
+renderNodes();
+resetView();
+</script>
+
+</body>
+</html>
