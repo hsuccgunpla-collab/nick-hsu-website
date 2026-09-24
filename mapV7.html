@@ -348,9 +348,10 @@
             .info-panel {
                 left: 12px;
                 right: 12px;
-                bottom: 82px;
+                bottom: 72px;
                 width: auto;
-                max-height: 48vh;
+                max-height: 30vh;
+                padding: 14px;
             }
 
             .map-controls {
@@ -371,32 +372,6 @@
                 display: block;
             }
         }
-    
-        .logo-link {
-            display: inline-flex;
-            align-items: center;
-            text-decoration: none;
-        }
-
-        .site-logo {
-            display: block;
-            width: 50px;
-            height: 50px;
-            object-fit: contain;
-        }
-
-        .logo-link:hover .site-logo {
-            transform: scale(1.04);
-            transition: transform .2s ease;
-        }
-
-        @media (max-width: 767px) {
-            .site-logo {
-                width: 42px;
-                height: 42px;
-            }
-        }
-
     </style>
 </head>
 
@@ -405,8 +380,9 @@
 <header id="main-header" class="fixed top-0 left-0 right-0 z-50 transition-all duration-300">
     <div class="container mx-auto px-5 md:px-6 py-4">
         <nav class="flex items-center justify-between">
-            <a href="index.html" aria-label="NICK HSU Home" class="logo-link">
-                <img src="NICK_HSU_LOGO_MASTER.svg" alt="NICK HSU Tangram N" class="site-logo">
+            <a href="index.html" class="text-white">
+                <span class="block text-xl md:text-2xl font-bold tracking-wider">NICK HSU</span>
+                <span class="block text-xs text-gray-500 tracking-[0.25em]">許 智程</span>
             </a>
 
             <div class="hidden md:flex items-center gap-8">
@@ -1682,7 +1658,11 @@ let initialPanX = 0;
 let initialPanY = 0;
 
 shell.addEventListener("pointerdown", event => {
-    if (event.target.closest(".map-node") || event.target.closest(".map-controls")) return;
+    if (event.target.closest(".map-node") || event.target.closest(".map-controls") || event.target.closest(".info-panel")) return;
+
+    if (window.innerWidth < 768 && document.getElementById("info-panel").classList.contains("show")) {
+        closeInfo();
+    }
 
     // Prevent the browser from starting text selection when the user begins dragging.
     if (window.getSelection) {
