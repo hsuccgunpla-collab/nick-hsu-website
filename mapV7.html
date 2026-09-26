@@ -39,6 +39,25 @@
             overflow-x: hidden;
         }
 
+
+        .logo-link {
+            display: inline-flex;
+            align-items: center;
+            text-decoration: none;
+        }
+
+        .site-logo {
+            display: block;
+            width: 50px;
+            height: 50px;
+            object-fit: contain;
+        }
+
+        .logo-link:hover .site-logo {
+            transform: scale(1.04);
+            transition: transform .2s ease;
+        }
+
         .nav-scrolled {
             background: rgba(17,24,39,.90);
             backdrop-filter: blur(12px);
@@ -308,6 +327,11 @@
         }
 
         @media (max-width: 767px) {
+            .site-logo {
+                width: 42px;
+                height: 42px;
+            }
+
             .map-shell {
                 height: calc(100vh - 68px);
                 min-height: 600px;
@@ -380,9 +404,8 @@
 <header id="main-header" class="fixed top-0 left-0 right-0 z-50 transition-all duration-300">
     <div class="container mx-auto px-5 md:px-6 py-4">
         <nav class="flex items-center justify-between">
-            <a href="index.html" class="text-white">
-                <span class="block text-xl md:text-2xl font-bold tracking-wider">NICK HSU</span>
-                <span class="block text-xs text-gray-500 tracking-[0.25em]">許 智程</span>
+            <a href="index.html" aria-label="NICK HSU Home" class="logo-link">
+                <img src="NICK_HSU_LOGO_MASTER.svg" alt="NICK HSU Tangram N" class="site-logo">
             </a>
 
             <div class="hidden md:flex items-center gap-8">
